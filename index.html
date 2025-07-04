@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Creator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+  <style>
+.github-badge {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 600;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 1000;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.github-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.github-badge img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #111;
+}
+    :root {
+      --primary-bg: #1b1b2f;
+      --accent-color: #fdd835;
+      --text-color: #ffffff;
+      --button-hover: #fbc02d;
+    }
+
+
+.wiki-brand {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #111;
+  background-color: #fdd835;
+  padding: 6px 12px;
+  border-radius: 8px;
+  z-index: 10;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; min-height: 100vh; background: var(--primary-bg); display: flex; align-items: center; justify-content: center; }
+    .container { width: 90%; max-width: 480px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border-radius: 20px; padding: 2.5rem 2rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); color: var(--text-color); animation: fadeIn 1s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    .digital-clock { font-size: 2.5rem; font-weight: bold; text-align: center; margin-bottom: 0.2rem; }
+    .clock-date { font-size: 1.3rem; text-align: center; margin-bottom: 1.8rem; opacity: 0.9; }
+    label { display: block; margin: 0.8rem 0 0.4rem; font-weight: 600; font-size: 1rem; }
+    select, input[type="text"], input[type="datetime-local"], input[type="url"] {
+      width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 10px; border: 1px solid #cccccc; background: #ffffff; color: #111111;
+    }
+    button { width: 100%; margin-top: 1.5rem; padding: 0.9rem; background: var(--accent-color); color: #111; font-weight: bold; font-size: 1.1rem; border: none; border-radius: 12px; cursor: pointer; transition: background 0.3s ease, transform 0.2s ease; }
+    button:hover { background: var(--button-hover); transform: scale(1.02); }
+    .output { margin-top: 2rem; text-align: left; }
+    .summary { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; color: var(--text-color); line-height: 1.6; box-shadow: 0 1px 6px rgba(0,0,0,0.2); font-size: 1rem; }
+    .summary b { color: #ffeb3b; } .summary a { color: #81d4fa; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="wiki-brand">Wiki – When</div>
+    <div class="digital-clock" id="live-clock">--:--:--</div>
+    <div class="clock-date" id="live-date">Loading date...</div>
+    <label for="event-timezone">Select Timezone:</label>
+    <select id="event-timezone"></select>
+    <label for="event-name">Event Name:</label>
+    <input id="event-name" type="text" placeholder="Enter event name" />
+    <label for="event-datetime">Select Event Date and Time:</label>
+    <input id="event-datetime" type="datetime-local" />
+    <label for="event-url">Event URL</label>
+    <input id="event-url" type="url" placeholder="https://example.com/thankyou" />
+    <label for="event-logo">Event Logo (Image URL or Base64):</label>
+    <input id="event-logo" type="url" placeholder="https://example.com/logo.png" />
+    <button id="create-btn">Create Event Link</button>
+    <div class="output" id="output"></div>
+  </div>
+  <script>
+    const timezoneSel = document.getElementById('event-timezone');
+    moment.tz.names().forEach(tz => {
+      const option = document.createElement('option');
+      option.value = option.textContent = tz;
+      timezoneSel.appendChild(option);
+    });
+    timezoneSel.value = moment.tz.guess();
+    function updateClock() {
+      const now = moment().tz(timezoneSel.value);
+      document.getElementById('live-clock').textContent = now.format('hh:mm:ss A');
+      document.getElementById('live-date').textContent = now.format('MMMM D, YYYY');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    document.getElementById('create-btn').onclick = function () {
+      const name = document.getElementById('event-name').value.trim();
+      const datetime = document.getElementById('event-datetime').value;
+      const tz = timezoneSel.value;
+      const redirectUrl = document.getElementById('event-url').value.trim();
+      const logo = document.getElementById('event-logo').value.trim();
+      if (!name || !datetime || !tz || !redirectUrl) return alert('Please fill in all fields.');
+      const tzMoment = moment.tz(datetime, "YYYY-MM-DDTHH:mm", tz);
+      if (!tzMoment.isValid() || tzMoment.isBefore(moment())) return alert('Please enter a valid future date/time.');
+      const payload = { name, timezone: tz, utc: tzMoment.clone().utc().toISOString(), redirect: redirectUrl, logo };
+      fetch("http://localhost:5000/api/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(res => res.json()).then(data => {
+        const eventUrl = `event/${data.short_code}`;
+        const localMoment = tzMoment.clone().tz(moment.tz.guess());
+        const userTz = moment.tz.guess();
+        document.getElementById('output').innerHTML = `
+          <div class="summary">
+            <div><b>Event:</b> ${name}</div>
+            <div><b>Original Time:</b> ${tzMoment.format("MMMM D, YYYY [at] h:mm A")} (${tz})</div>
+            <div><b>Your Local Time:</b> ${localMoment.format("MMMM D, YYYY [at] h:mm A")} (${userTz})</div>
+            <div style="margin-top: 0.8rem;">
+              <div><b>Countdown Link:</b> <a href="${eventUrl}" target="_blank">${eventUrl}</a></div>
+              <div><b>Redirect URL:</b> <a href="${redirectUrl}" target="_blank">${redirectUrl}</a></div>
+            </div>
+          </div>
+        `;
+      });
+    };
+  </script>
+<a href="https://github.com/Sanjesh-S" target="_blank" class="github-badge">
+  <img src="https://github.com/Sanjesh-S.png" alt="GitHub Avatar" />
+  <span>Sanjesh-S</span>
+</a>
+</body>
+</html>

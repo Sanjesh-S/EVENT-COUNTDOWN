@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home - Event Stamp Generator</title>
+  <style>
+.github-badge {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 600;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 1000;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.github-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.github-badge img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #111;
+}
+    :root {
+      --primary-bg: #1b1b2f;
+      --accent-color: #fdd835;
+      --text-color: #ffffff;
+      --button-hover: #fbc02d;
+    }
+
+
+.wiki-brand {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #111;
+  background-color: #fdd835;
+  padding: 6px 12px;
+  border-radius: 8px;
+  z-index: 10;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: var(--primary-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+  position: relative;
+      width: 90%;
+      max-width: 480px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      color: var(--text-color);
+      animation: fadeIn 1s ease-out;
+      text-align: center;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .digital-clock {
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 0.2rem;
+    }
+    .clock-date {
+      font-size: 1.3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+    .btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent-color);
+      color: #111;
+      font-weight: bold;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    .btn:hover {
+      background-color: var(--button-hover);
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="wiki-brand">Wiki – When</div>
+    <div class="digital-clock" id="live-clock">--:--:--</div>
+    <div class="clock-date" id="live-date">Loading date...</div>
+    <a href="index.html"><button class="btn">Generate Stamp</button></a>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+  <script>
+    function updateClock() {
+      const now = moment();
+      document.getElementById('live-clock').textContent = now.format('hh:mm:ss A');
+      document.getElementById('live-date').textContent = now.format('MMMM D, YYYY');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+<a href="https://github.com/Sanjesh-S" target="_blank" class="github-badge">
+  <img src="https://github.com/Sanjesh-S.png" alt="GitHub Avatar" />
+  <span>Sanjesh-S</span>
+</a>
+</body>
+</html>
