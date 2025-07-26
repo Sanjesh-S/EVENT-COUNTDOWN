@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Countdown</title>
+  <style>
+:root {
+  --primary-bg: #1b1b2f;
+  --accent-color: #fdd835;
+  --text-color: #ffffff;
+  --button-hover: #fbc02d;
+  --font-main: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-main);
+  background: var(--primary-bg);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  text-align: center;
+  padding: 2rem;
+  z-index: 1;
+}
+
+#event-logo {
+  max-width: 180px;
+  margin-bottom: 1rem;
+  display: none;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+}
+
+.flip-countdown {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.flip-unit {
+  background: #111;
+  color: #fff;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  min-width: 60px;
+}
+
+.flip-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.flip-label {
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+  color: #ddd;
+}
+
+.event-url-button {
+  background-color: var(--accent-color);
+  color: #111;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1.5rem;
+  margin-top: 2rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.event-url-button:hover {
+  background-color: var(--button-hover);
+  transform: scale(1.02);
+}
+
+.calendar-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.calendar-menu {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  background-color: #fff;
+  color: #111;
+  font-size: 1rem;
+  font-family: var(--font-main);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  width: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  z-index: 10;
+}
+
+.calendar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.8rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #ddd;
+}
+
+.calendar-menu a:hover {
+  background-color: #f0f0f0;
+}
+
+.calendar-menu a:last-child {
+  border-bottom: none;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img id="event-logo" src="" alt="Event Logo" />
+    <div class="title" id="event-title">Loading...</div>
+    <div class="subtitle" id="event-info"></div>
+
+    <div class="flip-countdown countdown">
+      <div class="flip-unit">
+        <div class="flip-value" id="days">00</div>
+        <div class="flip-label">DAYS</div>
+      </div>
+      <div class="flip-unit">
+        <div class="flip-value" id="hours">00</div>
+        <div class="flip-label">HOURS</div>
+      </div>
+      <div class="flip-unit">
+        <div class="flip-value" id="minutes">00</div>
+        <div class="flip-label">MINUTES</div>
+      </div>
+      <div class="flip-unit">
+        <div class="flip-value" id="seconds">00</div>
+        <div class="flip-label">SECONDS</div>
+      </div>
+    </div>
+
+    <button id="event-button" class="event-url-button" style="display:none;">Go to Event Page</button>
+
+    <div class="calendar-dropdown" style="margin-top: 1rem; display:none;" id="calendar-container">
+      <button class="event-url-button" onclick="toggleCalendarMenu()">📅 Add to Calendar</button>
+      <div class="calendar-menu" id="calendar-menu">
+        <a href="#" id="ical-link">📅 iCal File</a>
+        <a href="#" id="gcal-link">📆 Google</a>
+        <a href="#" id="apple-link"> Apple</a>
+        <a href="https://teams.live.com/calendar" target="_blank">🔷 Microsoft Teams</a>
+        <a href="#" id="outlook-link">📧 Outlook.com</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+  <script>
+    function toggleCalendarMenu() {
+      const menu = document.getElementById("calendar-menu");
+      menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+
+    const pathParts = window.location.pathname.split("/");
+    const id = pathParts[pathParts.length - 1];
+
+    if (id) {
+      fetch(`/api/event/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          startCountdown(data.name, data.timezone, data.utc, data.redirect, data.logo);
+        })
+        .catch(err => {
+          document.querySelector('.container').innerHTML = `<h2>Event Not Found</h2>`;
+        });
+    }
+
+    function startCountdown(name, timezone, utcTime, redirectUrl, logoUrl) {
+      const eventTitle = document.getElementById("event-title");
+      const eventInfo = document.getElementById("event-info");
+      const eventButton = document.getElementById("event-button");
+      const logoImage = document.getElementById("event-logo");
+      const calendarContainer = document.getElementById("calendar-container");
+
+      const start = moment.utc(utcTime);
+      const end = start.clone().add(1, 'hours');
+      const startStr = start.format("YYYYMMDDTHHmmss") + "Z";
+      const endStr = end.format("YYYYMMDDTHHmmss") + "Z";
+
+      const eventMoment = start.clone().tz(timezone);
+      const localMoment = start.clone().tz(moment.tz.guess());
+
+      if (logoUrl) {
+        logoImage.src = logoUrl;
+        logoImage.style.display = "block";
+      }
+
+      eventTitle.textContent = name;
+      eventInfo.innerHTML = `
+        <div>Original Time (${timezone}): ${eventMoment.format("MMMM D, YYYY [at] h:mm A")}</div>
+        <div>Your Local Time (${moment.tz.guess()}): ${localMoment.format("MMMM D, YYYY [at] h:mm A")}</div>
+      `;
+
+      eventButton.style.display = "inline-block";
+      eventButton.onclick = () => window.open(redirectUrl, '_blank');
+      calendarContainer.style.display = "inline-block";
+
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(name)}&dates=${startStr}/${endStr}&details=${encodeURIComponent("Event countdown for " + name)}&location=${encodeURIComponent(redirectUrl)}`;
+      const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(name)}&startdt=${start.toISOString()}&enddt=${end.toISOString()}&body=${encodeURIComponent("Event countdown")}&location=${encodeURIComponent(redirectUrl)}`;
+      const appleUrl = gcalUrl;
+
+      document.getElementById("gcal-link").href = gcalUrl;
+      document.getElementById("apple-link").href = appleUrl;
+      document.getElementById("outlook-link").href = outlookUrl;
+
+      document.getElementById("ical-link").onclick = () => {
+        const icsContent = [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "BEGIN:VEVENT",
+          `SUMMARY:${name}`,
+          `DTSTART:${startStr}`,
+          `DTEND:${endStr}`,
+          `DESCRIPTION:Event countdown for ${name}`,
+          `LOCATION:${redirectUrl}`,
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\n");
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${name.replace(/\s+/g, '_')}.ics`;
+        link.click();
+      };
+
+      function updateCountdown() {
+        const now = moment();
+        const remaining = start.diff(now);
+
+        if (remaining <= 0) {
+          ["days", "hours", "minutes", "seconds"].forEach(id => document.getElementById(id).textContent = "00");
+          clearInterval(timer);
+          return;
+        }
+
+        const duration = moment.duration(remaining);
+        document.getElementById("days").textContent = String(Math.floor(duration.asDays())).padStart(2, '0');
+        document.getElementById("hours").textContent = String(duration.hours()).padStart(2, '0');
+        document.getElementById("minutes").textContent = String(duration.minutes()).padStart(2, '0');
+        document.getElementById("seconds").textContent = String(duration.seconds()).padStart(2, '0');
+      }
+
+      updateCountdown();
+      const timer = setInterval(updateCountdown, 1000);
+    }
+  </script>
+</body>
+</html>

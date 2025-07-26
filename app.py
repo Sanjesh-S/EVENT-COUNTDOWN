@@ -1,72 +1,60 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient
-from datetime import datetime
-import shortuuid
+from bson import ObjectId
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
 
-# Read MongoDB URI from environment variable
+# Secure MongoDB URI from .env
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
-db = client["event_countdowns"]
+db = client["event_db"]
 events = db["events"]
 
-@app.route('/api/create', methods=['POST'])
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+@app.route("/index.html")
+def index():
+    return render_template("index.html")
+
+
+
+@app.route("/event/<event_id>")
+def view_event(event_id):
+    return render_template("event.html")
+
+@app.route("/api/create", methods=["POST"])
 def create_event():
     data = request.json
-    name = data.get("name")
-    timezone = data.get("timezone")
-    utc = data.get("utc")
-    redirect = data.get("redirect")
-    logo = data.get("logo")
-
-    if not name or not timezone or not utc or not redirect:
-        return jsonify({"error": "Missing fields"}), 400
-
-    short_code = shortuuid.uuid()[:6]
-
     event = {
-        "name": name,
-        "timezone": timezone,
-        "utc": utc,
-        "redirect": redirect,
-        "logo": logo,
-        "short_code": short_code,
-        "created_at": datetime.utcnow()
+        "name": data["name"],
+        "timezone": data["timezone"],
+        "utc": data["utc"],
+        "redirect": data["redirect"],
+        "logo": data.get("logo")
     }
+    result = events.insert_one(event)
+    return jsonify({"id": str(result.inserted_id)})
 
-    events.insert_one(event)
-    return jsonify({"short_code": short_code}), 201
-
-@app.route('/api/event/<short_code>', methods=['GET'])
-def get_event(short_code):
-    event = events.find_one({"short_code": short_code}, {"_id": 0})
+@app.route("/api/event/<event_id>")
+def get_event(event_id):
+    event = events.find_one({"_id": ObjectId(event_id)})
     if not event:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify(event)
+        return jsonify({"error": "Event not found"}), 404
 
-@app.route('/event/<short_code>')
-def serve_event_with_code(short_code):
-    return send_from_directory('.', 'event.html')
+    return jsonify({
+        "name": event["name"],
+        "timezone": event["timezone"],
+        "utc": event["utc"],
+        "redirect": event["redirect"],
+        "logo": event.get("logo")
+    })
 
-@app.route('/event.html')
-def serve_event_page():
-    return send_from_directory('.', 'event.html')
-
-@app.route('/index.html')
-def serve_index_page():
-    return send_from_directory('.', 'index.html')
-
-@app.route('/')
-def serve_home():
-    return send_from_directory('.', 'home.html')
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
