@@ -104,15 +104,6 @@ You can deploy easily using any of the following:
 
 ---
 
-## 📸 Screenshots
-
-### 🎯 Create Event
-![form](https://github.com/yourusername/event-countdown/assets/yourusername/form.png)
-
-### ⏳ Countdown Page
-![countdown](https://github.com/yourusername/event-countdown/assets/yourusername/countdown.png)
-
----
 
 ## 🧾 License
 
